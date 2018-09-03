@@ -1,5 +1,7 @@
 #!/bin/bash
 
+setxkbmap de
+
 rm ./inv/* &> /dev/null
 
 read -p "Bitte Preis eingeben:`echo $'\n> '`" price
