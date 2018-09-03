@@ -15,4 +15,4 @@ Minecraft muss auch immer im Vordergrund laufen.
 
 Also am besten in einer Virtualisierung oder einen alten PC laufen lassen.
                 
-Beim auffüllen des Botes muss das script und Minecraft (samt launcher) neu gestartet werden da er sonst alte Einkäufe nochmals ausführt.
+Beim auffüllen des Botes muss das script und Minecraft (samt launcher) neu gestartet werden, da er sonst alte Einkäufe nochmals ausführt.
