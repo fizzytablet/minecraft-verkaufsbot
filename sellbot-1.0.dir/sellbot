@@ -1,0 +1,152 @@
+#!/bin/bash
+
+rm ./inv/* &> /dev/null
+
+read -p "Bitte Preis eingeben:`echo $'\n> '`" price
+
+read -p "Bitte anzahl Slots eingeben (1-9)`echo $'\n> '`" inv
+
+invcheck=0
+while [ $invcheck -lt $inv ]; do
+	invcheck=$(expr $invcheck + 1)
+	read -p "Wieviele Items liegen auf den $invcheck Slot?`echo $'\n> '`" amount 
+	echo $amount > ./inv/slot_$invcheck
+done
+
+invcheck=1
+Empty=false
+xdotool key $invcheck
+
+read -p "Drücke Enter um den Bot zu starten" 
+
+rm ./donepayments
+rm ./paylist
+touch ./donepayments
+touch ./paylist
+
+function log {
+	echo >> ./log/payments
+	echo ---------------------------------- >> ./log/payments
+	date +%d.%m.%Y\ -\ %R >> ./log/payments 
+	echo $NameLine >> ./log/payments
+}
+
+sleep 10
+
+while :; do
+
+	grep -En "hat dir .* gegeben" $HOME/.minecraft/launcher_log.txt | awk -F ":" '{print $1}' >> paylist
+
+#	grep -n "hat dir \$1 gegeben." $HOME/.minecraft/launcher_log.txt | awk -F ":" '{print $1}' >> paylist
+	while read line; do
+		checkline=$(grep $line ./donepayments)
+		if [ -z $checkline ]; then
+			NameLine=$(sed -n "${line}p" < $HOME/.minecraft/launcher_log.txt)
+			
+			#Gezahlter Preis
+			Payed=$(echo $NameLine | awk -F "$" '{print $2}' | awk -F "gegeben" '{print $1}')
+
+			Name=$(echo $NameLine | awk -F "|" '{print $2}' | awk -F " " '{print $1}')
+			FakeMoney=$(echo $NameLine | awk -F "|" '{print $2}' | awk -F " " '{print $3}')
+			FakeMoney2=$(echo $NameLine | awk -F "|" '{print $2}' | awk -F " " '{print $2}') 
+			if [[ $FakeMoney = mir\] ]]; then
+				echo Fakemoney from $Name
+				log; echo fakemoney >> ./log/payments
+				echo $line >> ./donepayments
+			else
+				if [ $FakeMoney2 = : ]; then
+					echo Fakemoney from $Name
+					log; echo fakemoney >> ./log/payments
+					echo  $line >> ./donepayments
+				else
+					if [ $Payed = $price ]; then
+						if [ $Empty = false ]; then		
+							ItemNo=$(cat ./inv/slot_$invcheck)
+							echo Itemnummer:$ItemNo Slotnummer:$invcheck
+				
+
+
+						else
+							echo Empty
+						fi
+						
+						if [ $Empty = false ]; then
+							echo $line >> ./donepayments
+                                                	log; echo Acceptet >> ./log/payments
+                                                	echo "Payment acceptet from $Name"
+                                                	xdotool key BackSpace
+                                                	sleep 0.2
+                                                	xdotool type "msg $Name Danke für deinen Einkauf $Name" 
+                                                	sleep 0.2
+                                                	xdotool key Return
+                                                	sleep 0.2
+                                                	xdotool key q
+							sleep 2
+
+
+
+							#Item Counter
+							ItemNo=$(expr $ItemNo - 1)
+							echo $ItemNo > ./inv/slot_$invcheck
+							if [ $ItemNo = 0 ]; then
+								invcheck=$(expr $invcheck + 1)
+								xdotool key $invcheck
+							fi
+							
+
+							if [ ! -f ./inv/slot_$invcheck ]; then
+								Empty=true
+				
+							fi
+						else
+
+                                                       echo $line >> ./donepayments
+                                                        echo empty bot
+                                                        log; echo empty bot >> ./log/payments
+                                                        echo "Empty bot for $Name"
+                                                        xdotool key BackSpace
+                                                        sleep 0.2
+                                                        xdotool type "msg $Name Leider bin ich momentan Leer. Komm bitte später wieder"
+                                                        sleep 0.2
+                                                        xdotool key Return
+                                                        sleep 0.2
+                                                        xdotool key BackSpace
+                                                        sleep 0.2
+                                                        xdotool type "pay $Name $Payed"
+                                                        sleep 0.2
+                                                        xdotool key Return
+                                                        sleep 2
+
+
+
+
+
+
+						fi
+						
+					else
+							echo $line >> ./donepayments
+							echo wrong amount
+							log; echo wrong amount >> ./log/payments
+							echo "Wrong amount from $Name"
+							xdotool key BackSpace
+							sleep 0.2
+							xdotool type "msg $Name Diesen Betrag kann ich leider nicht annehmen"
+							sleep 0.2
+							xdotool key Return
+							sleep 0.2
+							xdotool key BackSpace
+							sleep 0.2
+							xdotool type "pay $Name $Payed"
+							sleep 0.2
+							xdotool key Return
+							sleep 2
+	
+					fi
+				fi
+			fi
+		fi
+	done <./paylist
+	sleep 1
+	rm ./paylist
+done
